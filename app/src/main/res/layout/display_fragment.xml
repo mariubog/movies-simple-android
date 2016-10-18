@@ -1,0 +1,22 @@
+<!--<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"--><!--xmlns:tools="http://schemas.android.com/tools"--><!--android:layout_width="match_parent"--><!--android:layout_height="match_parent"--><!--android:background="@color/colorPrimaryDark"--><!--android:padding="0dp">-->
+
+<com.example.supermario.mymovies.extra.ObservableHorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/coversScrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fadeScrollbars="false"
+    android:fillViewport="true"
+    android:padding="0dp">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/miniDaysLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+
+        android:padding="0dp"
+        android:stretchColumns="yes">
+
+    </LinearLayout>
+</com.example.supermario.mymovies.extra.ObservableHorizontalScrollView><!--</FrameLayout>-->
+

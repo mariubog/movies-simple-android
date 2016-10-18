@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MyMovies</string>
+    <string name="title_activity_display_fragment">DisplayFragment</string>
+</resources>
