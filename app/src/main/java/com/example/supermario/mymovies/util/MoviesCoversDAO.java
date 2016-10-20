@@ -3,7 +3,6 @@ package com.example.supermario.mymovies.util;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.util.SparseArray;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,19 +14,21 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created by supermario on 10/17/2016.
  */
 
-public class MoviesCoversDAO extends AsyncTask<String, Void, SparseArray<IdCoverHolder>> {
+public class MoviesCoversDAO extends AsyncTask<String, Void, Map<Integer,IdCoverHolder>> {
     public static final String SEARCH_POPULAR = "SEARCH_POPULAR";
     public static final String SEARCH_TOP_RATED = "TOP_RATED";
     private final String LOG_TAG = MoviesCoversDAO.class.getSimpleName();
     public AsyncResponse asyncResponse;
 
     @Override
-    protected SparseArray<IdCoverHolder> doInBackground(String... params) {
+    protected Map<Integer,IdCoverHolder> doInBackground(String... params) {
         System.out.println("SEARCH .....................1");
         // If there's no params then set default search I guess.
         if (params.length != 2) {
@@ -74,7 +75,7 @@ public class MoviesCoversDAO extends AsyncTask<String, Void, SparseArray<IdCover
 
             Uri builtUri = Uri.parse(SEARCH_BASE_URL).buildUpon()
                     .appendQueryParameter(PAGE_PARAM, params[1])
-                    .appendQueryParameter(APIKEY_PARAM, "**************************key here")
+                    .appendQueryParameter(APIKEY_PARAM, "***********************************")
                     .appendQueryParameter(FORMAT_PARAM, format)
                     .build();
 
@@ -113,7 +114,7 @@ public class MoviesCoversDAO extends AsyncTask<String, Void, SparseArray<IdCover
             System.out.println("SEARCH .....................6");
             moviesFetchedJsonStr = buffer.toString();
 
-            Log.v(LOG_TAG, "Movies string: " + moviesFetchedJsonStr);
+       //   Log.v(LOG_TAG, "Movies string: " + moviesFetchedJsonStr);
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error " + e);
             // If the code didn't successfully get the weather data, there's no point in attemping
@@ -142,7 +143,7 @@ public class MoviesCoversDAO extends AsyncTask<String, Void, SparseArray<IdCover
     }
 
     @Override
-    protected void onPostExecute(SparseArray<IdCoverHolder> result) {
+    protected void onPostExecute(Map<Integer,IdCoverHolder> result) {
         if (result != null) {
 //            mForecastAdapter.clear();
 //            for (String dayForecastStr : result) {
@@ -150,20 +151,20 @@ public class MoviesCoversDAO extends AsyncTask<String, Void, SparseArray<IdCover
 //            }
             // New data is back from the server.  Hooray!
 
-            for (int i = 0; i < result.size(); i++) {
-                int key = result.keyAt(i);
-                // get the object by the key.
-                IdCoverHolder holder = result.get(key);
-                System.out.println("ID FOUND : " + holder.id + "   path:" + holder.cover_path);
-            }
-            System.out.println("FOUND MOVIES : " + result.size());
+//            for (int i = 0; i < result.size(); i++) {
+//                int key = result.keyAt(i);
+//                // get the object by the key.
+//                IdCoverHolder holder = result.get(key);
+//              //  System.out.println("ID FOUND : " + holder.id + "   path:" + holder.cover_path);
+//            }
+        //    System.out.println("FOUND MOVIES : " + result.size());
             asyncResponse.processFinish(result);
         }
     }
 
 
     //  getjasoninfo
-    private SparseArray getMoviesIDsFromJason(String moviesJsonStr)
+    private Map<Integer,IdCoverHolder> getMoviesIDsFromJason(String moviesJsonStr)
             throws JSONException {
 
         // These are the names of the JSON objects that need to be extracted.
@@ -176,7 +177,7 @@ public class MoviesCoversDAO extends AsyncTask<String, Void, SparseArray<IdCover
         JSONArray moviesArray = forecastJson.getJSONArray(OWM_RESULTS);
 
         // OWM returns   IDS which are needed to find movie in database and it's poster jpg path
-        SparseArray<IdCoverHolder> idCoverHolders = new SparseArray<IdCoverHolder>(moviesArray.length());
+        Map<Integer,IdCoverHolder> idCoverHolders = new LinkedHashMap<Integer,IdCoverHolder>(moviesArray.length());
         IdCoverHolder idCoverHolder;
         JSONObject movie;
 

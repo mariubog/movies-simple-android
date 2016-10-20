@@ -4,33 +4,39 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.example.supermario.mymovies.extra.HorizontalScrollViewListener;
 import com.example.supermario.mymovies.extra.ObservableHorizontalScrollView;
 import com.example.supermario.mymovies.util.AsyncResponse;
 import com.example.supermario.mymovies.util.IdCoverHolder;
 import com.example.supermario.mymovies.util.MoviesCoversDAO;
+import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.example.supermario.mymovies.R.id.coversScrollView;
 import static com.example.supermario.mymovies.R.id.miniDaysLayout;
 
-public class DisplayFragment extends Fragment implements HorizontalScrollViewListener, AsyncResponse {
+public class DisplayFragment extends Fragment implements AsyncResponse {
 
-
+    private boolean init = true;
     // private ArrayAdapter<String> coversAdapter;
     private boolean preloaded = false;
     private ViewHolder viewHolders[];
     private ObservableHorizontalScrollView observableHorizontalScrollView;
     private LinearLayout moviesDisplay;
-    SparseArray<IdCoverHolder> coverHolders;
+    LinkedHashMap<Integer, IdCoverHolder> coverHolders;
+    List<Integer> coverHoldersList;
     ViewGroup container;
 
     public DisplayFragment() {
@@ -77,7 +83,7 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
                         if (front) {
                             scrollCovers(moviesDisplay, 0);
                         } else {
-                            //   reloadMovieCoverLayotBackward();
+
                             reloadMovieCoverLayot(0, true);
                         }
                     } else if (observableHorizontalScrollView.getScrollX() > (moviesDisplay.getWidth() / 6) * 3) {
@@ -85,7 +91,7 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
                         if (end) {
                             scrollCovers(moviesDisplay, ((moviesDisplay.getWidth() / 6) * 5));
                         } else {
-                            //  reloadMovieCoverLayotForward();
+
                             reloadMovieCoverLayot(((moviesDisplay.getWidth() / 6) * 5), false);
                         }
                     }
@@ -114,76 +120,6 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
     boolean front = true;
     boolean end = false;
 
-    private void reloadMovieCoverLayotForward() {
-        ObjectAnimator scrollAnimaition = ObjectAnimator.ofInt(observableHorizontalScrollView, "scrollX", ((moviesDisplay.getWidth() / 6) * 5));
-        scrollAnimaition.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                ViewHolder temp = viewHolders[0];
-                moviesDisplay.removeView(viewHolders[0].movieCoverLayout);
-                viewHolders[0] = viewHolders[1];
-                viewHolders[1] = viewHolders[2];
-                viewHolders[2] = temp;
-                moviesDisplay.addView(temp.movieCoverLayout);
-
-
-                observableHorizontalScrollView.scrollTo((moviesDisplay.getWidth() / 6) * 2, 0);
-                front = false;
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-            }
-        });
-        scrollAnimaition.setDuration(400).start();
-
-    }
-
-
-    private void reloadMovieCoverLayotBackward() {
-
-        ObjectAnimator scrollAnimaition = ObjectAnimator.ofInt(observableHorizontalScrollView, "scrollX", 0);
-        scrollAnimaition.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                ViewHolder temp = viewHolders[2];
-                viewHolders[2] = viewHolders[1];
-                viewHolders[1] = viewHolders[0];
-                viewHolders[0] = temp;
-                moviesDisplay.removeAllViews();
-                moviesDisplay.addView(viewHolders[0].movieCoverLayout);
-                moviesDisplay.addView(viewHolders[1].movieCoverLayout);
-                moviesDisplay.addView(viewHolders[2].movieCoverLayout);
-
-
-                observableHorizontalScrollView.scrollTo((moviesDisplay.getWidth() / 6) * 2, 0);
-
-                end = false;
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-            }
-        });
-        scrollAnimaition.setDuration(400).start();
-    }
-
 
     private void reloadMovieCoverLayot(int prescrollValue, final boolean isBackward) {
 
@@ -200,7 +136,7 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
                                              } else {
                                                  loadCoversForward();
                                              }
-                                             observableHorizontalScrollView.scrollTo((moviesDisplay.getWidth() / 6) * 2, 0);
+                                           //  observableHorizontalScrollView.scrollTo((moviesDisplay.getWidth() / 6) * 2, 0);
                                          }
 
                                          @Override
@@ -216,15 +152,42 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
         scrollAnimaition.setDuration(400).start();
     }
 
-    private void loadCoversForward() {
-        ViewHolder temp = viewHolders[0];
-        moviesDisplay.removeView(viewHolders[0].movieCoverLayout);
-        viewHolders[0] = viewHolders[1];
-        viewHolders[1] = viewHolders[2];
-        viewHolders[2] = temp;
-        moviesDisplay.addView(temp.movieCoverLayout);
-        front = false;
+
+    private void loadCoverAndIncrement(ImageView img) {
+        if (presentCover < coverHolders.size()) {
+            Picasso.with(getContext()).load("http://image.tmdb.org/t/p/w185" + coverHolders.get(coverHoldersList.get(presentCover)).cover_path).into(img);
+            img.setId(coverHolders.get(coverHoldersList.get(presentCover)).id);
+            //  img.setId(coverHolders.keyAt(presentCover));
+            presentCover++;
+        }
     }
+
+
+    private void loadCoversForward() {
+
+        if ((presentCover + 1 + 4) >= coverHolders.size()) {
+            pageNumber++;
+         //   presentCover++;
+            MoviesCoversDAO moviesCoversDAO = new MoviesCoversDAO();
+            moviesCoversDAO.asyncResponse = this;
+            moviesCoversDAO.execute(MoviesCoversDAO.SEARCH_POPULAR, String.valueOf(pageNumber));
+        } else {
+            for (int i = 0; i < 4; i++) {
+                loadCoverAndIncrement(viewHolders[0].buttons[i]);
+            }
+
+            ViewHolder temp = viewHolders[0];
+            moviesDisplay.removeView(viewHolders[0].movieCoverLayout);
+            viewHolders[0] = viewHolders[1];
+            viewHolders[1] = viewHolders[2];
+            viewHolders[2] = temp;
+            moviesDisplay.addView(temp.movieCoverLayout);
+            front = false;
+            observableHorizontalScrollView.scrollTo((moviesDisplay.getWidth() / 6) * 2, 0);
+        }
+
+    }
+
 
     private void loadCoversBackward() {
         ViewHolder temp = viewHolders[2];
@@ -240,7 +203,7 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
 
 
     private void preloadMovieCoverLayot(LinearLayout moviesDisplay, ViewGroup container, LayoutInflater inflater) {
-        int i = 0;
+
 
         int width = this.getResources().getDisplayMetrics().widthPixels;
         int rowCapacity = getRowCapacity();
@@ -251,7 +214,7 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
 
         for (int n = 0; n < 3; n++) {
             viewHolder = new ViewHolder();
-            viewHolder.buttons = new Button[rowCapacity * 2];
+            viewHolder.buttons = new ImageButton[rowCapacity * 2];
             LinearLayout movieCoverLayout = (LinearLayout) inflater.inflate(R.layout.movie_cover_table_layout, container, false);
             movieCoverLayout.setId(n);
             LinearLayout.LayoutParams lps = new LinearLayout.LayoutParams(width, LayoutParams.MATCH_PARENT
@@ -265,53 +228,44 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
             viewHolder.movieCoverLayout = movieCoverLayout;
             int button_position = 0;
             for (LinearLayout row : rows) {
-                Button btn;
+                ImageButton btn;
                 for (int s = 0; s < rowCapacity; s++) {
                     if (presentCover < coverHolders.size()) {
-                        btn = new Button(getActivity());
-//                    btn.setText("kos " + i);
-//                    btn.setId(i);
-//                        System.out.println("KEY ...........  " + coverHolders.keyAt(presentCover));
-//                        System.out.println("HOLDED ...........  " + coverHolders.get(coverHolders.keyAt(presentCover)));
-                        System.out.println("id ...........  " + coverHolders.get(coverHolders.keyAt(presentCover)).id);
-                        System.out.println("PATH ...........  " + coverHolders.get(coverHolders.keyAt(presentCover)).cover_path);
-                        String cover_path = coverHolders.get(coverHolders.keyAt(presentCover)).cover_path;
-                        int idm = coverHolders.get(coverHolders.keyAt(presentCover)).id;
+                        btn = new ImageButton(getActivity());
+                        //int idm = coverHolders.get(coverHolders.keyAt(presentCover)).id;
+                        int idm = coverHolders.get(coverHoldersList.get(presentCover)).id;
 
-                        btn.setText(n + "");
+
+                        // coverHoldersList.get(i)
                         btn.setId(idm);
 
+                        Picasso.with(getContext()).load("http://image.tmdb.org/t/p/w185" + coverHolders.get(coverHoldersList.get(presentCover)).cover_path).into(btn);
 
-                        System.out.println("2 id ...........  " + coverHolders.get(btn.getId()).id);
                         presentCover++;
                         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT
                         );
                         lp.weight = 1.0f;
 
-
-                        //     btn.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.cover_button));
-
                         btn.setLayoutParams(lp);
+                        btn.setPadding(0, 0, 0, 0);
+                        btn.setScaleType(ImageView.ScaleType.FIT_XY);
                         row.addView(btn);
                         viewHolder.buttons[button_position] = btn;
                         LinearLayout tmp = (LinearLayout) btn.getParent().getParent();
 
-                        final int id = tmp.getId();
+                        //     final int id = tmp.getId();
                         btn.setOnClickListener(new android.view.View.OnClickListener() {
 
                             @Override
                             public void onClick(View v) {
                                 // TODO Auto-generated method stub
-                                //  System.out.println("layout nr:  " + v.getId());
-                                System.out.println("layout nr:  " + coverHolders.get(v.getId()).cover_path);
-                                // System.out.println("layout nr:  " + coverHolders.size());
-
-
+                                System.out.println("layout nr:  " + v.getId());
+                                System.out.println("layout nr:  " + coverHolders.get(v.getId()).id);
                             }
                         });
 
                         button_position++;
-                        i++;
+
                     }
                 }
             }
@@ -332,29 +286,92 @@ public class DisplayFragment extends Fragment implements HorizontalScrollViewLis
 
     private class ViewHolder {
         public LinearLayout movieCoverLayout;
-        public Button[] buttons;
+        public ImageButton[] buttons;
     }
 
+
     @Override
-    public void onScrollChanged(ObservableHorizontalScrollView scroll, int x, int y, int oldx, int oldy) {
-//        Rect scrollBounds = new Rect();
-//
-//        observableHorizontalScrollView.getHitRect(scrollBounds);
-//
-//        if (observableHorizontalScrollView.getScrollX() > (moviesDisplay.getWidth() / 6)) {
-//            if (!center) {
-//                // reloadMovieCoverLayotForward(moviesDisplay);
+    public void processFinish(Map<Integer, IdCoverHolder> output) {
+
+
+        // System.out.println("HOLDERS ...........  " + coverHolders);
+        if (init) {
+            init = false;
+            coverHolders = new LinkedHashMap(output);
+            coverHoldersList = new ArrayList<Integer>(output.keySet());
+
+            loadMovies(moviesDisplay, container, LayoutInflater.from(getContext()));
+
+
+        } else {
+            // System.out.println("COVER HOLDERS BEFORE UPDATE SIZE:............................ " + coverHolders.size());
+//            for (int s = 0; s < coverHolders.size(); s++) {
+//                System.out.println(s + " COVER HOLDER : " + coverHolders.get(coverHoldersList.get(s)).id);
 //            }
-//        }
 
-    }
+            if (coverHolders == null) {
+                return;
+            }
+            if (coverHolders.size() > 20) {
+                for (int i = 0; i < output.size(); i++) {
+                    // coverHolders.remove(coverHolders.keyAt(0));
+//                    System.out.println("!!!!!");
+                    coverHolders.remove(coverHoldersList.get(0));
+                    coverHoldersList.remove(0);
+                    presentCover--;
+                }
+            } else {
+                for (int x = 0; x < 4; x++) {
+                    //  System.out.println(x + " REMOVE: " + coverHolders.keyAt(0));
+                    //coverHolders.remove(coverHolders.keyAt(0));
+//                    System.out.println("REMOVING ..." + coverHolders.get(coverHoldersList.get(0)).id + "    " + coverHoldersList.get(0));
+                    coverHolders.remove(coverHoldersList.get(0));
+                    coverHoldersList.remove(0);
+                    presentCover--;
 
-    @Override
-    public void processFinish(Object output) {
+                }
+                //   System.out.println("COVER AFTER REMOVE: " + coverHolders.size());
+            }
+            //System.out.println("COVER AFTER REMOVE: ........................" + coverHolders.size());
 
-        coverHolders = (SparseArray<IdCoverHolder>) output;
-        System.out.println("HOLDERS ...........  " + coverHolders);
+//            for (int s = 0; s < coverHolders.size(); s++) {
+//                System.out.println(s + " COVER HOLDER : " + coverHoldersList.get(s));
+//                System.out.println(s + " COVER HOLDER : " + coverHolders.get(coverHoldersList.get(s)));
+//                System.out.println(s + " COVER HOLDER : " + coverHolders.get(coverHoldersList.get(s)).id);
+//            }
 
-        loadMovies(moviesDisplay, container, LayoutInflater.from(getContext()));
+            //   remove from coverHoldersList
+            coverHoldersList.addAll(output.keySet());
+
+         //   System.out.println("COVER LIST AFTER ADD: .............................." + coverHolders.size());
+
+//            for (int i = 0; i < coverHoldersList.size(); i++) {
+//                System.out.println(i + " COVER HOLDER L: " + coverHoldersList.get(i));
+//            }
+            coverHolders.putAll(output);
+
+
+            //  coverHolders.put(output.keyAt(i), output.get(output.keyAt(i)));
+//            int g = 0;
+//            for (Integer key : coverHolders.keySet()) {
+//                System.out.println(g + " COVER HOLDER KEY: " + key);
+//                g++;
+//            }
+
+          //  System.out.println("COVER HOLDERS AFTER UPDATE SIZE:...................... " + coverHolders.size());
+          //  System.out.println("COVER HOLDERS list AFTER UPDATE SIZE: ....................." + coverHoldersList.size());
+            //  System.out.println("presentCover:  " + presentCover);
+
+//            for (int i = 0; i < coverHolders.size(); i++) {
+//                System.out.println(i + " OUTPUT : " + coverHoldersList.get(i));
+//                System.out.println(i + " OUTPUT : " + coverHolders.get(coverHoldersList.get(i)).id);
+//
+//            }
+//            System.out.println(" present cover: ...................." + presentCover);
+            loadCoversForward();
+
+
+        }
+
     }
 }
